@@ -4,7 +4,7 @@ Over time I'll add PowerShell helper functions to assist in kernel exploitation.
 
 ## Common PowerShell Exploit Constructs
 
-### Create Buffer
+### Create buffer
 
 ```powershell
 # Byte buffer int/hex
@@ -15,7 +15,7 @@ $Buff = [Byte[]](0x41)*255 + [Byte[]](0x42)*0xff
 $Buff = [Byte[]](0x41)*255 + [System.BitConverter]::GetBytes($Pointer)
 ```
 
-### Pointer To Alloc bytes
+### Pointer to alloc bytes
 
 ```powershell
 # Pointer can be converted as above
