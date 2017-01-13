@@ -134,3 +134,13 @@ PS C:\> Bitmap-Read -Address 0x41414141
 # Write
 PS C:\> Bitmap-Write -Address 0xFFFFF9010320F000 -Value 0xb33fb33fb33fb33f
 ```
+
+### Alloc-NullPage
+
+Wrapper to allocate the process null page on Win 7 32bit.
+
+```
+# Read
+PS C:\> $NullPage = Alloc-NullPage -Bytes 1024
+PS C:\> if ($NullPage -eq $true) {...} else {...}
+```
