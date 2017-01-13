@@ -7,7 +7,7 @@ function Bitmap-Read {
     [IntPtr]$Pointer = [Kernel32]::VirtualAlloc([System.IntPtr]::Zero, [System.IntPtr]::Size, 0x3000, 0x40)
     $CallResult = [GDI32]::GetBitmapBits($WorkerBitmap, [System.IntPtr]::Size, $Pointer)
 	if ($x32Architecture){
-    	[System.Runtime.InteropServices.Marshal]::ReadInt32($Pointer)
+		[System.Runtime.InteropServices.Marshal]::ReadInt32($Pointer)
 	} else {
 		[System.Runtime.InteropServices.Marshal]::ReadInt64($Pointer)
 	}
