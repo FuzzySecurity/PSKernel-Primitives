@@ -18,8 +18,11 @@ $Buff = [Byte[]](0x41)*255 + [System.BitConverter]::GetBytes($Pointer)
 ### Pointer to alloc bytes
 
 ```powershell
-# Pointer can be converted as above
+# (1) Virtual alloc -> MEM_COMMIT|MEM_RESERVE & PAGE_EXECUTE_READWRITE
+# Call VirtualFree to release
 [IntPtr]$Pointer = [Kernel32]::VirtualAlloc([System.IntPtr]::Zero, $Bytes.Length, 0x3000, 0x40)
+# (2) AllocHGlobal
+[IntPtr]$Pointer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($Bytes.Length)
 [System.Runtime.InteropServices.Marshal]::Copy($Bytes, 0, $Pointer, $Bytes.Length)
 ```
 
