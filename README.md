@@ -82,6 +82,12 @@ while ($Timer.ElapsedMilliseconds -lt 10000) {
 $Timer.Stop()
 ```
 
+### Get Winver version output
+
+```
+$WinVer = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\").ReleaseId
+```
+
 ## Kernel Helper Functions
 
 ### Get-LoadedModules
@@ -98,6 +104,22 @@ ImageSize    ImageName                                     ImageBase
 
 C:\PS> "{0:X}" -f $Modules[0].ImageBase
 FFFFF8030460B000
+```
+
+### Stage-gSharedInfoBitmap
+
+Universal Bitmap leak using accelerator tables, 32/64 bit Win7-10 (+ post anniversary).
+
+```
+PS C:\Users\b33f> Stage-gSharedInfoBitmap |fl
+
+BitmapKernelObj : -7692235059200
+BitmappvScan0   : -7692235059120
+BitmapHandle    : 1845828432
+
+PS C:\Users\b33f> $Manager = Stage-gSharedInfoBitmap
+PS C:\Users\b33f> "{0:X}" -f $Manager.BitmapKernelObj
+FFFFF901030FF000
 ```
 
 ### Stage-BitmapReadWrite
