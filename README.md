@@ -84,7 +84,7 @@ $Timer.Stop()
 
 ### Get Winver version output
 
-```
+```powershell
 $WinVer = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\").ReleaseId
 ```
 

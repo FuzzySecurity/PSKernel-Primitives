@@ -31,11 +31,11 @@ function Stage-gSharedInfoBitmap {
 	{
 		[DllImport("gdi32.dll")]
 		public static extern IntPtr CreateBitmap(
-			int nWidth,
-			int nHeight,
-			uint cPlanes,
-			uint cBitsPerPel,
-			IntPtr lpvBits);
+		    int nWidth,
+		    int nHeight,
+		    uint cPlanes,
+		    uint cBitsPerPel,
+		    IntPtr lpvBits);
 
 		[DllImport("kernel32", SetLastError=true, CharSet = CharSet.Ansi)]
 		public static extern IntPtr LoadLibrary(
