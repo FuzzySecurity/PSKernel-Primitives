@@ -88,6 +88,12 @@ $Timer.Stop()
 $WinVer = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\").ReleaseId
 ```
 
+### VirtualKD -> KD not loading on boot Win10
+
+```
+bcdedit /dbgsettings SERIAL DEBUGPORT:1 BAUDRATE:115200
+```
+
 ## Kernel Helper Functions
 
 ### Get-LoadedModules
