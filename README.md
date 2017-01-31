@@ -172,3 +172,54 @@ Wrapper to allocate the process null page on Win 7 32bit.
 PS C:\> $NullPage = Alloc-NullPage -Bytes 1024
 PS C:\> if ($NullPage -eq $true) {...} else {...}
 ```
+
+## Fuzz Helpers
+
+### Get-FuzzedInt
+
+Returns fuzzed values for various types of integers with a preference for "beautiful"(?) values.
+
+```
+PS C:\Users\b33f> for ($i=0;$i-lt20;$i++) { Return-Int16 }
+-31622
+19309
+8192
+128
+-32329
+32758
+7294
+-32277
+-4272
+-32768
+8192
+-1
+-30707
+1
+-22387
+1
+0
+2048
+-3387
+32616
+PS C:\Users\b33f> for ($i=0;$i-lt20;$i++) { "{0:X}" -f $(Return-UInt32) }
+0
+400000
+4000000
+200
+FF3FC000
+FF007F80
+800
+0
+FFFFFFFF
+4000000
+F4CB0DBE
+1
+0
+FF0001FE
+FF00FF00
+1000
+41818E8F
+1
+0
+1
+```
