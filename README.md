@@ -180,7 +180,7 @@ PS C:\> if ($NullPage -eq $true) {...} else {...}
 Returns fuzzed values for various types of integers with a preference for "beautiful"(?) values.
 
 ```
-PS C:\Users\b33f> for ($i=0;$i-lt20;$i++) { Return-Int16 }
+PS C:\Users\b33f> for ($i=0;$i-lt10;$i++) { Return-Int16 }
 -31622
 19309
 8192
@@ -191,17 +191,7 @@ PS C:\Users\b33f> for ($i=0;$i-lt20;$i++) { Return-Int16 }
 -32277
 -4272
 -32768
-8192
--1
--30707
-1
--22387
-1
-0
-2048
--3387
-32616
-PS C:\Users\b33f> for ($i=0;$i-lt20;$i++) { "{0:X}" -f $(Return-UInt32) }
+PS C:\Users\b33f> for ($i=0;$i-lt10;$i++) { "{0:X}" -f $(Return-UInt32) }
 0
 400000
 4000000
@@ -212,14 +202,32 @@ FF007F80
 0
 FFFFFFFF
 4000000
-F4CB0DBE
-1
-0
-FF0001FE
-FF00FF00
-1000
-41818E8F
-1
-0
-1
+```
+
+### Get-FuzzedString
+
+Returns 3 types of strings, AlphaNum, Full ASCII and Unicode. Needs wrappers to marshal strings as AnsiBStr, BStr, LPStr, LPTStr, LPWStr, TBStr and UNICODE_STRING.
+
+```
+PS C:\Users\b33f> Return-AlphaNum -Maxlen 200
+ej3vx38XQ3Kr24b6F5JFs0FIO16rGg5xGO6kLk0FULE2v76Rt11o6566ewRWE5J1pcf40q38868n
+
+PS C:\Users\b33f> Return-AlphaNum -Maxlen 200
+35c7UU4X17yLHlixrYwUa1t6D2KpEGQOwY
+
+PS C:\Users\b33f> Return-AlphaNum -Maxlen 200
+2XuHMUn4J6lESFNUOPf8S30Qy20Q4Q2TmWNv78hNO840SX365pmo23EC2eURY0K4E73wIOVUUyA324EY7S8V7Jxv0XL50hPsabLX7
+
+PS C:\Users\b33f> Return-FullASCII
+pA#`df4A~0VQ|\
+
+PS C:\Users\b33f> Return-FullASCII
+c0PL-`<$h9m1I3t]
+'
+
+PS C:\Users\b33f> Return-Unicode 500
+�搂ዴ南觐ቃ᱕懮놋Ŕ矶폧䩶∺緈憚캵鄟殫䩐ﺕ趂◪엏趨父邂ﲞ䥊層㮶䃐ゎ墜�ꇏ�࠽�Ꜯ뻹漷ᷨᖲ坞뤂勈᩹慧�ؘ쎛흗䅍핪ҡ맹뱍㑛庛到ᖤ祪്졗碒㣒
+쁸稝᪆䀔㥻ҋ珖瞓ᔥї셵䣪鈐൤㲚췵⃙톷ꬢ툼햓ꋂ峱透䋞꫟�꽏樬፽趣⻹믲톄州岝衼ᘧ棶諌늝핞䛚铵䄇蛵㽟謓⨮遮ㄆ닊ⴵ梑敌掑땓찕毳狯莇鸈ꢏ锜
+ꔤ㓱ڃຨ㿊㓦䑈⽌䳩掍㢟骉Ⳟ䃥㳏᧱㊺祫푹邠늝�≒ƿࡋ㟸닯當鐋卫猗됔䊋Ƥ弬圦郂㙲崘䑚댜Ꞥ䵃毧Ⱦ讹�ሢꉮ綟ᖴ뾩⎥䍐＇狱俗먟ꓛ돲䴄錩
+昇嚺쓫䂌咣嗢眇ᗠ肎읭굻㮞ᗥთ㚼ꇭ盏ꀣ⦟礎
 ```
