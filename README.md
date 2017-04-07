@@ -63,7 +63,7 @@ $HashTable = @{
 	Element3 = "Val"
 }
 $Object = New-Object PSObject -Property $HashTable
-$Result += $Result
+$Result += $Object
 ```
 
 ### Handle to current process
@@ -80,6 +80,32 @@ while ($Timer.ElapsedMilliseconds -lt 10000) {
 	#...Something...
 }
 $Timer.Stop()
+```
+
+### Simulate threading with runspaces
+
+```powershell
+$Runspace = [runspacefactory]::CreateRunspace()
+$Runspace.Open()
+$RaceCondition = [powershell]::Create()
+$RaceCondition.runspace = $Runspace
+[void]$RaceCondition.AddScript({
+	param($SomeExternalVar1,$SomeExternalVar2)
+
+	# Do some stuff here
+
+	while ($true) {
+
+		# And/or do some stuff in a loop
+		
+	}
+}).AddArgument($SomeExternalVar1).AddArgument($SomeExternalVar2)
+$AscObj = $RaceCondition.BeginInvoke()
+
+# Some condition to fulfill
+
+# Kill the runspace
+$SizeRace.Stop()
 ```
 
 ### Get Winver version output
@@ -151,16 +177,13 @@ C:\PS> "{0:X}" -f $BitMapObject.ManagerKernelObj
 FFFFF9010320F000
 ```
 
-### Bitmap-Helpers
+### Bitmap-Elevate
 
-Just two small functions which act as a wrapper for GDI arbitrary r/w primitive.
+A token stealing wrapper x32/64 which ingests a handle to a manager and worker bitmap. Note that the function requires "Get-LoadedModules", if you can find a way to leak the kernel image name/base then you can easily remove this requirement. This function also replaces the bitmap helpers, previously in the repo, as they are included in this new function.
 
 ```
-# Read
-PS C:\> Bitmap-Read -Address 0x41414141
+PS C:\> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle
 
-# Write
-PS C:\> Bitmap-Write -Address 0xFFFFF9010320F000 -Value 0xb33fb33fb33fb33f
 ```
 
 ### Alloc-NullPage
