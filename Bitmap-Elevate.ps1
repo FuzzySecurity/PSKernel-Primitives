@@ -42,6 +42,11 @@ function Bitmap-Elevate {
 	}
 "@
 
+	# Flag architecture $x32Architecture/!$x32Architecture
+	if ([System.IntPtr]::Size -eq 4) {
+		$x32Architecture = 1
+	}
+
 	# Arbitrary Kernel read
 	function Bitmap-Read {
 		param ($Address)
