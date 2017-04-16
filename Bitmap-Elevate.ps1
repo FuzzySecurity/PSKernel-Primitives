@@ -85,9 +85,15 @@ function Bitmap-Elevate {
 					$ActiveProcessLinks = 0x2e8
 				}
 			} else {
-				$UniqueProcessIdOffset = 0xb4
-				$TokenOffset = 0xf4          
-				$ActiveProcessLinks = 0xb8
+				if($OSVersion.Build -lt 15063){
+					$UniqueProcessIdOffset = 0xb4
+					$TokenOffset = 0xf4          
+					$ActiveProcessLinks = 0xb8
+				} else {
+					$UniqueProcessIdOffset = 0xb4
+					$TokenOffset = 0xfc          
+					$ActiveProcessLinks = 0xb8
+				}
 			}
 		}
 		
