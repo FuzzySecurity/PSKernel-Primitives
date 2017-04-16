@@ -75,9 +75,15 @@ function Bitmap-Elevate {
 		'10.0' # Win10 / 2k16
 		{
 			if(!$x32Architecture){
-				$UniqueProcessIdOffset = 0x2e8
-				$TokenOffset = 0x358          
-				$ActiveProcessLinks = 0x2f0
+				if($OSVersion.Build -lt 15063){
+					$UniqueProcessIdOffset = 0x2e8
+					$TokenOffset = 0x358          
+					$ActiveProcessLinks = 0x2f0
+				} else {
+					$UniqueProcessIdOffset = 0x2e0
+					$TokenOffset = 0x358          
+					$ActiveProcessLinks = 0x2e8
+				}
 			} else {
 				$UniqueProcessIdOffset = 0xb4
 				$TokenOffset = 0xf4          
