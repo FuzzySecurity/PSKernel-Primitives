@@ -1,13 +1,14 @@
 function Stage-gSharedInfoBitmap {
 <#
 .SYNOPSIS
-    Universal Bitmap leak using accelerator tables, 32/64 bit Win7-10 (post anniversary).
+	Universal x32/x64 Bitmap leak using gSharedInfo.
+	Targets: 7, 8, 8.1, 10, 10 RS1
 
 .DESCRIPTION
-    Author: Ruben Boonen (@FuzzySec)
-    License: BSD 3-Clause
-    Required Dependencies: None
-    Optional Dependencies: None
+	Author: Ruben Boonen (@FuzzySec)
+	License: BSD 3-Clause
+	Required Dependencies: None
+	Optional Dependencies: None
 
 .EXAMPLE
 	PS C:\Users\b33f> Stage-gSharedInfoBitmap |fl

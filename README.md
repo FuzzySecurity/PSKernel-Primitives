@@ -138,9 +138,28 @@ C:\PS> "{0:X}" -f $Modules[0].ImageBase
 FFFFF8030460B000
 ```
 
+### Stage-HmValidateHandleBitmap
+Universal x64 Bitmap leak using HmValidateHandle.
+
+Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
+
+```
+PS C:\Users\b33f> Stage-HmValidateHandleBitmap |fl
+
+BitmapKernelObj : -34364023603200
+BitmappvScan0   : -34364023603120
+BitmapHandle    : 419765292
+
+PS C:\Users\b33f> $Manager = Stage-HmValidateHandleBitmap
+PS C:\Users\b33f> "{0:X}" -f $Manager.BitmapKernelObj
+FFFFE0BF0094A000
+```
+
 ### Stage-gSharedInfoBitmap
 
-Universal Bitmap leak using accelerator tables, 32/64 bit Win7-10 (+ post anniversary).
+Universal x32/x64 Bitmap leak using gSharedInfo.
+
+Targets: 7, 8, 8.1, 10, 10 RS1
 
 ```
 PS C:\Users\b33f> Stage-gSharedInfoBitmap |fl
@@ -156,7 +175,9 @@ FFFFF901030FF000
 
 ### Stage-BitmapReadWrite
 
-Creates manager and worker bitmaps & leaks their kernel objects. This only works pre Win 10 v1607!
+Universal x32/x64 Bitmap leak using PEB.
+
+Targets: 7, 8, 8.1, 10
 
 ```
 C:\PS> Stage-BitmapReadWrite

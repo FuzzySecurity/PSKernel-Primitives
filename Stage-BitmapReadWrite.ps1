@@ -1,33 +1,32 @@
 function Stage-BitmapReadWrite {
 <#
 .SYNOPSIS
-    Get PowerShell PEB, create manager&worker bitmaps and leak kernel objects.
-
-    Warning: This only works up to Windows 10 v1607!
+	Universal x32/x64 Bitmap leak using PEB.
+	Targets: 7, 8, 8.1, 10
 
 .DESCRIPTION
-    Author: Ruben Boonen (@FuzzySec)
-    License: BSD 3-Clause
-    Required Dependencies: None
-    Optional Dependencies: None
+	Author: Ruben Boonen (@FuzzySec)
+	License: BSD 3-Clause
+	Required Dependencies: None
+	Optional Dependencies: None
 
 .EXAMPLE
-    C:\PS> Stage-BitmapReadWrite
-
-    ManagerpvScan0       : -7692227456944
-    WorkerHandleTable    : 767454567328
-    ManagerKernelObj     : -7692227457024
-    PEB                  : 8757247991808
-    WorkerpvScan0        : -7692227415984
-    ManagerHandle        : -737866269
-    WorkerHandle         : 2080706172
-    GdiSharedHandleTable : 767454478336
-    ManagerHandleTable   : 767454563656
-    WorkerKernelObj      : -7692227416064
-    
-    C:\PS> $BitMapObject = Stage-BitmapReadWrite
-    C:\PS> "{0:X}" -f $BitMapObject.ManagerKernelObj
-    FFFFF9010320F000
+	C:\PS> Stage-BitmapReadWrite
+	
+	ManagerpvScan0       : -7692227456944
+	WorkerHandleTable    : 767454567328
+	ManagerKernelObj     : -7692227457024
+	PEB                  : 8757247991808
+	WorkerpvScan0        : -7692227415984
+	ManagerHandle        : -737866269
+	WorkerHandle         : 2080706172
+	GdiSharedHandleTable : 767454478336
+	ManagerHandleTable   : 767454563656
+	WorkerKernelObj      : -7692227416064
+	
+	C:\PS> $BitMapObject = Stage-BitmapReadWrite
+	C:\PS> "{0:X}" -f $BitMapObject.ManagerKernelObj
+	FFFFF9010320F000
 #>
 
 	Add-Type -TypeDefinition @"
