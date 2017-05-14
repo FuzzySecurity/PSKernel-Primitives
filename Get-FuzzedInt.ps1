@@ -107,6 +107,9 @@ function Return-UInt32 {
 		6  {0xFF000000 + ([Shift]::Left(0xFFFF,$((Get-Random -Maximum 10000)%8)))} # 0xFF000000 -> 0xFFFFFF00
 		7  {$(Get-Random -Minimum 0 -Maximum 2147483647)}
 		8  {$(Get-Random -Minimum 2147483647 -Maximum 4294967295)}
+	}
+	if ($FuzzInt.GetType().Name -eq "Double") {
+		[UInt32]$FuzzInt = [math]::floor($FuzzInt)
 	} [UInt32]"0x$("{0:X}" -f $FuzzInt)"
 }
 
