@@ -217,6 +217,18 @@ PS C:\> $NullPage = Alloc-NullPage -Bytes 1024
 PS C:\> if ($NullPage -eq $true) {...} else {...}
 ```
 
+### Get-SyscallDelegate
+
+Allocate 32/64 bit shellcode and get a Syscall delegate for the memory pointer.
+
+```
+# Sample definition for NtWriteVirtualMemory
+C:\PS> $NtWriteVirtualMemory = Get-SyscallDelegate -ReturnType '[UInt32]' -ParameterArray @([IntPtr],[IntPtr],[IntPtr],[int],[ref][int])
+
+# Syscall ID = 0x37 (Win7)
+C:\PS> $NtWriteVirtualMemory.Invoke([UInt16]0x37,[IntPtr]$hProcess,[IntPtr]$pBaseAddress,[IntPtr]$pBuffer,$NumberOfBytesToWrite,[ref]$OutBytes)
+```
+
 ## Fuzz Helpers
 
 ### Get-FuzzedInt
