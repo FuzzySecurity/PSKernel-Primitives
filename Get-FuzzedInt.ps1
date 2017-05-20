@@ -16,6 +16,24 @@ function Return-Bool {
 	$(Get-Random -Maximum 10000)%2
 }
 
+# -128 to 127
+# [sbyte] type
+function Return-Int8 {
+	$RandSwitch = $(Get-Random -Maximum 10000)%10
+	$FuzzInt = switch ($RandSwitch) {
+		0  {-128}
+		1  {127}
+		2  {-1}
+		3  {1}
+		4  {0}
+		5  {0xA}
+		6  {0xF}
+		7  {0x41}
+		8  {$(Get-Random -Minimum -128 -Maximum 0)}
+		9  {$(Get-Random -Minimum 0 -Maximum 127)}
+	} [sbyte]"0x$("{0:X}" -f [sbyte]$FuzzInt)"
+}
+
 # -32768 to 32767
 # 0xFFFF8000 to 0x7FFF
 function Return-Int16 {
@@ -74,6 +92,22 @@ function Return-Int64 {
 		9  {$(Get-Random -Minimum -9223372036854775808 -Maximum -4611686018427387904)}
 		10 {$(Get-Random -Minimum -4611686018427387904 -Maximum 0)}
 	} [Int64]"0x$("{0:X}" -f [Int64]$FuzzInt)"
+}
+
+# 0 to 255
+# [byte] type
+function Return-UInt8 {
+	$RandSwitch = $(Get-Random -Maximum 10000)%8
+	$FuzzInt = switch ($RandSwitch) {
+		0  {0}
+		1  {255}
+		2  {1}
+		3  {0xA}
+		4  {0xF}
+		5  {0x41}
+		6  {$(Get-Random -Minimum 0 -Maximum 127)}
+		7  {$(Get-Random -Minimum 127 -Maximum 255)}
+	} [byte]"0x$("{0:X}" -f [byte]$FuzzInt)"
 }
 
 # 0 to 65535
