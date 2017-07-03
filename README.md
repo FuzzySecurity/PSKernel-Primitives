@@ -139,7 +139,7 @@ FFFFF8030460B000
 ```
 
 ### Stage-HmValidateHandleBitmap
-Universal x64 Bitmap leak using HmValidateHandle.
+Universal x64 Bitmap leak using HmValidateHandle. Includes tagTHREADINFO pointer to facilitate low integrity EPROCESS leak.
 
 Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
 

