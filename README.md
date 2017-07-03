@@ -146,9 +146,10 @@ Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
 ```
 PS C:\Users\b33f> Stage-HmValidateHandleBitmap |fl
 
-BitmapKernelObj : -34364023603200
-BitmappvScan0   : -34364023603120
-BitmapHandle    : 419765292
+tagTHREADINFO   : -7693316289488
+BitmappvScan0   : -7693315010480
+BitmapKernelObj : -7693315010560
+BitmapHandle    : 419758522
 
 PS C:\Users\b33f> $Manager = Stage-HmValidateHandleBitmap
 PS C:\Users\b33f> "{0:X}" -f $Manager.BitmapKernelObj
