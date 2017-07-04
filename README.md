@@ -201,10 +201,16 @@ FFFFF9010320F000
 
 ### Bitmap-Elevate
 
-A token stealing wrapper x32/64 which ingests a handle to a manager and worker bitmap. Note that the function requires "Get-LoadedModules", if you can find a way to leak the kernel image name/base then you can easily remove this requirement. This function also replaces the bitmap helpers, previously in the repo, as they are included in this new function.
+A token stealing wrapper for x32/64 which ingests a handle to a manager and worker bitmap.
+
+Note that this function has two methods, if supplied with a pointer to an arbitrary tagTHREADINFO object it can elevate the current process from low integrity. Without the tagTHREADINFO pointer it relies on NtQuerySystemInformation (Get-LoadedModules) to leak the base address of the ntkernel which requires medium integrity on Win8.1+.
 
 ```
-PS C:\> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle
+# MedIL token theft
+C:\PS> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle
+
+# LowIL token theft
+C:\PS> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle -ThreadInfo $ManagerBitmap.tagTHREADINFO
 
 ```
 

