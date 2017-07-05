@@ -3,7 +3,10 @@ function Bitmap-Elevate {
 .SYNOPSIS
 	A token stealing wrapper for x32/64 which ingests a handle to a manager and worker bitmap.
 
-	Note that this function has two methods, if supplied with a pointer to an arbitrary tagTHREADINFO object it can elevate the current process from low integrity. Without the tagTHREADINFO pointer it relies on NtQuerySystemInformation (Get-LoadedModules) to leak the base address of the ntkernel which requires medium integrity on Win8.1+.
+	Note that this function has two methods, if supplied with a pointer to an arbitrary
+	tagTHREADINFO object it can elevate the current process from low integrity. Without the
+	tagTHREADINFO pointer it relies on NtQuerySystemInformation (Get-LoadedModules) to leak
+	the base address of the ntkernel which requires medium integrity on Win8.1+.
 
 .DESCRIPTION
 	Author: Ruben Boonen (@FuzzySec)
