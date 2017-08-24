@@ -122,6 +122,36 @@ bcdedit /dbgsettings SERIAL DEBUGPORT:1 BAUDRATE:115200
 
 ## Kernel Helper Functions
 
+### Pointer-Leak
+
+Pointer-Leak is a wrapper for various types of pointer leaks, more will be added over time.
+
+Methods:
+
+* NT kernel base leak through the TEB (by @Blomster81)
+  * Properties: Requires Bitmap primitive & LowIL compatible
+  * Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
+
+* PTE leak through nt!MiGetPteAddress (by @Blomster81 & @FuzzySec)
+  * Properties: RS1+ requires Bitmap primitive, NT Kernel base & LowIL compatible
+  * Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
+
+```
+# NT Kernel base leak
+PS C:\Users\b33f> Pointer-Leak -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle -Type TebNtBase
+
+KTHREAD   : -35184359294848
+TEBBase   : 140699435483136
+NtPointer : -8787002226668
+NtBase    : -8787003412480
+
+# PTE leak
+PS C:\Users\b33f> Pointer-Leak -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle -NtBase $NTLeak.NtBase -VirtualAddress 0xFFFFF78000000800 -Type MiGetPteAddress
+
+PTEBase    : -10445360463872
+PTEAddress : -9913858260992
+```
+
 ### Get-KernelShellCode
 
 Generate x32/64 Kernel token stealing shellcode.
