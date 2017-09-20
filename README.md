@@ -122,6 +122,28 @@ bcdedit /dbgsettings SERIAL DEBUGPORT:1 BAUDRATE:115200
 
 ## Kernel Helper Functions
 
+### Get-Handles
+
+Use NtQuerySystemInformation::SystemHandleInformation to get a list of open handles in the specified process.
+
+Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
+
+```
+C:\PS> $SystemProcHandles = Get-Handles -ProcID 4
+C:\PS> $Key = $SystemProcHandles |Where-Object {$_.ObjectType -eq "Key"}
+C:\PS> $Key |ft
+
+ObjectType AccessMask PID Handle HandleFlags KernelPointer
+---------- ---------- --- ------ ----------- -------------
+Key        0x00000000   4 0x004C NONE        0xFFFFC9076FC29BC0
+Key        0x00020000   4 0x0054 NONE        0xFFFFC9076FCDA7F0
+Key        0x000F0000   4 0x0058 NONE        0xFFFFC9076FC39CE0
+Key        0x00000000   4 0x0090 NONE        0xFFFFC907700A6B40
+Key        0x00000000   4 0x0098 NONE        0xFFFFC90770029F70
+Key        0x00020000   4 0x00A0 NONE        0xFFFFC9076FC9C1A0
+                     [...Snip...]
+```
+
 ### Pointer-Leak
 
 Pointer-Leak is a wrapper for various types of pointer leaks, more will be added over time.
