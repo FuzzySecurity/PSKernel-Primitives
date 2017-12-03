@@ -126,7 +126,7 @@ bcdedit /dbgsettings SERIAL DEBUGPORT:1 BAUDRATE:115200
 
 Use NtQuerySystemInformation::SystemHandleInformation to get a list of open handles in the specified process.
 
-Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
+Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2, 10 RS3
 
 ```
 C:\PS> $SystemProcHandles = Get-Handles -ProcID 4

@@ -80,10 +80,31 @@ function Get-Handles {
 	$OSMajorMinor = "$($OSVersion.Major).$($OSVersion.Minor)"
 	switch ($OSMajorMinor)
 	{
-		'10.0' # Windows 10 (Tested on v1511)
+		'10.0'
 		{
-			# Win 10 v1703
-			if ($OSVersion.Build -ge 15063) {
+			# Win 10 v1709 (RS3)
+			if ($OSVersion.Build -ge 16299) {
+				$TypeSwitches = @{
+					0x25 = 'TmTm'; 0x19 = 'Desktop'; 0x7 = 'Process'; 0x2e = 'EnergyTracker'; 0x2c = 'RegistryTransaction';
+					0xf = 'DebugObject'; 0x41 = 'VRegConfigurationContext'; 0x35 = 'DmaDomain'; 0x1d = 'TpWorkerFactory';
+					0x1e = 'Adapter'; 0x5 = 'Token'; 0x3a = 'DxgkSharedResource'; 0xd = 'PsSiloContextPaged';
+					0x39 = 'NdisCmState'; 0xc = 'ActivityReference'; 0x36 = 'PcwObject'; 0x30 = 'WmiGuid'; 0x34 = 'DmaAdapter';
+					0x31 = 'EtwRegistration'; 0x40 = 'DxgkSharedBundleObject'; 0x2a = 'Session'; 0x1b = 'RawInputManager';
+					0x14 = 'Timer'; 0x11 = 'Mutant'; 0x15 = 'IRTimer'; 0x3e = 'DxgkCurrentDxgProcessObject';
+					0x22 = 'IoCompletion'; 0x3f = 'DxgkSharedProtectedSessionObject'; 0x3b = 'DxgkSharedSyncObject';
+					0x18 = 'WindowStation'; 0x16 = 'Profile'; 0x24 = 'File'; 0x9 = 'Partition'; 0x13 = 'Semaphore';
+					0xe = 'PsSiloContextNonPaged'; 0x33 = 'EtwConsumer'; 0x1a = 'Composition'; 0x32 = 'EtwSessionDemuxEntry';
+					0x1c = 'CoreMessaging'; 0x26 = 'TmTx'; 0x4 = 'SymbolicLink'; 0x37 = 'FilterConnectionPort'; 0x2b = 'Key';
+					0x17 = 'KeyedEvent'; 0x12 = 'Callback'; 0x23 = 'WaitCompletionPacket'; 0xa = 'UserApcReserve'; 0x6 = 'Job';
+					0x3d = 'DxgkDisplayManagerObject'; 0x3c = 'DxgkSharedSwapChainObject'; 0x1f = 'Controller';
+					0xb = 'IoCompletionReserve'; 0x20 = 'Device'; 0x3 = 'Directory'; 0x29 = 'Section'; 0x28 = 'TmEn';
+					0x8 = 'Thread'; 0x2 = 'Type'; 0x38 = 'FilterCommunicationPort'; 0x2f = 'PowerRequest'; 0x27 = 'TmRm';
+					0x10 = 'Event'; 0x2d = 'ALPC Port'; 0x21 = 'Driver';
+				}
+			}
+			
+			# Win 10 v1703 (RS2)
+			if ($OSVersion.Build -ge 15063 -And $OSVersion.Build -lt 16299) {
 				$TypeSwitches = @{
 					0x24 = 'TmTm'; 0x18 = 'Desktop'; 0x7 = 'Process'; 0x2c = 'RegistryTransaction'; 0xe = 'DebugObject';
 					0x3d = 'VRegConfigurationContext'; 0x34 = 'DmaDomain'; 0x1c = 'TpWorkerFactory'; 0x1d = 'Adapter';
@@ -103,7 +124,7 @@ function Get-Handles {
 				}
 			}
 			
-			# Win 10 v1607
+			# Win 10 v1607 (RS1)
 			if ($OSVersion.Build -ge 14393 -And $OSVersion.Build -lt 15063) {
 				$TypeSwitches = @{
 					0x23 = 'TmTm'; 0x17 = 'Desktop'; 0x7 = 'Process'; 0x2b = 'RegistryTransaction'; 0xd = 'DebugObject';
